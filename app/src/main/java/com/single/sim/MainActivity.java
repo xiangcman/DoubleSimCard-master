@@ -87,14 +87,14 @@ public class MainActivity extends AppCompatActivity {
             ((TextView) findViewById(R.id.sim2_operatorname)).setText("未检测到卡2");
         }
 
-        String net1 = SimUtils.getSimNetworkType(this, 0);
+        String net1 = SimUtils.getSimNetworkName(this, 0);
         if (!TextUtils.isEmpty(net1)) {
             ((TextView) findViewById(R.id.sim1_networkType)).setText(net1);
         } else {
             ((TextView) findViewById(R.id.sim1_networkType)).setText("未检测到卡1");
         }
 
-        String net2 = SimUtils.getSimNetworkType(this, 1);
+        String net2 = SimUtils.getSimNetworkName(this, 1);
         if (!TextUtils.isEmpty(net2)) {
             ((TextView) findViewById(R.id.sim2_networkType)).setText(net2);
         } else {

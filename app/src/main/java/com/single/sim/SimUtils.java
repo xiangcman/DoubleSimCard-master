@@ -2,27 +2,11 @@ package com.single.sim;
 
 import android.Manifest;
 import android.content.Context;
+import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 
 import java.lang.reflect.Method;
-
-import static android.telephony.TelephonyManager.NETWORK_TYPE_1xRTT;
-import static android.telephony.TelephonyManager.NETWORK_TYPE_CDMA;
-import static android.telephony.TelephonyManager.NETWORK_TYPE_EDGE;
-import static android.telephony.TelephonyManager.NETWORK_TYPE_EHRPD;
-import static android.telephony.TelephonyManager.NETWORK_TYPE_EVDO_0;
-import static android.telephony.TelephonyManager.NETWORK_TYPE_EVDO_A;
-import static android.telephony.TelephonyManager.NETWORK_TYPE_EVDO_B;
-import static android.telephony.TelephonyManager.NETWORK_TYPE_GPRS;
-import static android.telephony.TelephonyManager.NETWORK_TYPE_HSDPA;
-import static android.telephony.TelephonyManager.NETWORK_TYPE_HSPA;
-import static android.telephony.TelephonyManager.NETWORK_TYPE_HSPAP;
-import static android.telephony.TelephonyManager.NETWORK_TYPE_HSUPA;
-import static android.telephony.TelephonyManager.NETWORK_TYPE_IDEN;
-import static android.telephony.TelephonyManager.NETWORK_TYPE_LTE;
-import static android.telephony.TelephonyManager.NETWORK_TYPE_UMTS;
-import static com.single.sim.PermissionUtil.hasSelfPermission;
 
 /**
  * Created by xiangcheng on 17/7/13.
@@ -37,20 +21,11 @@ public class SimUtils {
     private static final String SIM_LINE_NUMBER = "getLine1Number";
 
     public static String getSimPhonenumber(Context context, int slotIdx) {
-        if (hasSelfPermission(context, Manifest.permission.READ_PHONE_STATE) ||
-                hasSelfPermission(context, "android.permission.READ_PRIVILEGED_PHONE_STATE")) {
+        if (PermissionUtil.hasSelfPermission(context, Manifest.permission.READ_PHONE_STATE) ||
+                PermissionUtil.hasSelfPermission(context, "android.permission.READ_PRIVILEGED_PHONE_STATE")) {
             Log.d(TAG, "READ_PHONE_STATE permission has BEEN granted to getSimPhonenumber().");
             if (getSimStateBySlotIdx(context, slotIdx)) {
-                //sim1
-                if (slotIdx == 0) {
-                    return (String) getSimByMethod(context, SIM_LINE_NUMBER, 1);
-                } else if (slotIdx == 1) {
-                    if (getSimStateBySlotIdx(context, 0)) {
-                        return (String) getSimByMethod(context, SIM_LINE_NUMBER, 2);
-                    } else {
-                        return (String) getSimByMethod(context, SIM_LINE_NUMBER, 1);
-                    }
-                }
+                return (String) getSimByMethod(context, SIM_LINE_NUMBER, getSubidBySlotId(context, slotIdx));
             }
             return null;
         } else {
@@ -78,61 +53,17 @@ public class SimUtils {
         }
     }
 
-    public static String getSimNetworkType(Context context, int slotIdx) {
+    public static String getSimNetworkName(Context context, int slotIdx) {
         if (getSimStateBySlotIdx(context, slotIdx)) {
-            //sim1
-            if (slotIdx == 0) {
-                int type = (int) getSimByMethod(context, SIM_NETWORK_TYPE, 1);
-                Log.d(TAG, "type:" + type);
-                return getNetworkClass(type);
-            } else if (slotIdx == 1) {
-                if (getSimStateBySlotIdx(context, 0)) {
-                    return getNetworkClass((int) getSimByMethod(context, SIM_NETWORK_TYPE, 2));
-                } else {
-                    return getNetworkClass((int) getSimByMethod(context, SIM_NETWORK_TYPE, 1));
-                }
-            }
+            return getNetworkName((int)
+                    getSimByMethod(context, SIM_NETWORK_TYPE, getSubidBySlotId(context, slotIdx)));
         }
         return "UNKNOWN";
     }
 
-    public static String getNetworkClass(int networkType) {
-        switch (networkType) {
-            case NETWORK_TYPE_GPRS:
-            case NETWORK_TYPE_EDGE:
-            case NETWORK_TYPE_CDMA:
-            case NETWORK_TYPE_1xRTT:
-            case NETWORK_TYPE_IDEN:
-                return "2G";
-            case NETWORK_TYPE_UMTS:
-            case NETWORK_TYPE_EVDO_0:
-            case NETWORK_TYPE_EVDO_A:
-            case NETWORK_TYPE_HSDPA:
-            case NETWORK_TYPE_HSUPA:
-            case NETWORK_TYPE_HSPA:
-            case NETWORK_TYPE_EVDO_B:
-            case NETWORK_TYPE_EHRPD:
-            case NETWORK_TYPE_HSPAP:
-                return "3G";
-            case NETWORK_TYPE_LTE:
-                return "4G";
-            default:
-                return "UNKNOWN";
-        }
-    }
-
     public static String getSimOperatorName(Context context, int slotIdx) {
         if (getSimStateBySlotIdx(context, slotIdx)) {
-            //sim1
-            if (slotIdx == 0) {
-                return (String) getSimByMethod(context, SIM_OPERATOR_NAME, 1);
-            } else if (slotIdx == 1) {
-                if (getSimStateBySlotIdx(context, 0)) {
-                    return (String) getSimByMethod(context, SIM_OPERATOR_NAME, 2);
-                } else {
-                    return (String) getSimByMethod(context, SIM_OPERATOR_NAME, 1);
-                }
-            }
+            return (String) getSimByMethod(context, SIM_OPERATOR_NAME, getSubidBySlotId(context, slotIdx));
         }
         return null;
     }
@@ -173,6 +104,60 @@ public class SimUtils {
         }
 
         return null;
+    }
+
+    public static String getNetworkName(int networkType) {
+        switch (networkType) {
+            case TelephonyManager.NETWORK_TYPE_GPRS:
+            case TelephonyManager.NETWORK_TYPE_EDGE:
+            case TelephonyManager.NETWORK_TYPE_CDMA:
+            case TelephonyManager.NETWORK_TYPE_1xRTT:
+            case TelephonyManager.NETWORK_TYPE_IDEN:
+                return "2G";
+            case TelephonyManager.NETWORK_TYPE_UMTS:
+            case TelephonyManager.NETWORK_TYPE_EVDO_0:
+            case TelephonyManager.NETWORK_TYPE_EVDO_A:
+            case TelephonyManager.NETWORK_TYPE_HSDPA:
+            case TelephonyManager.NETWORK_TYPE_HSUPA:
+            case TelephonyManager.NETWORK_TYPE_HSPA:
+            case TelephonyManager.NETWORK_TYPE_EVDO_B:
+            case TelephonyManager.NETWORK_TYPE_EHRPD:
+            case TelephonyManager.NETWORK_TYPE_HSPAP:
+                return "3G";
+            case TelephonyManager.NETWORK_TYPE_LTE:
+                return "4G";
+            default:
+                return "UNKNOWN";
+        }
+    }
+
+    /**
+     * to
+     * @param context
+     * @param slotId
+     * @return
+     */
+    public static int getSubidBySlotId(Context context, int slotId) {
+        SubscriptionManager subscriptionManager = (SubscriptionManager) context.getSystemService(
+                Context.TELEPHONY_SUBSCRIPTION_SERVICE);
+        try {
+            Class<?> telephonyClass = Class.forName(subscriptionManager.getClass().getName());
+            Class<?>[] parameter = new Class[1];
+            parameter[0] = int.class;
+            Method getSimState = telephonyClass.getMethod("getSubId", parameter);
+            Object[] obParameter = new Object[1];
+            obParameter[0] = slotId;
+            Object ob_phone = getSimState.invoke(subscriptionManager, obParameter);
+
+            if (ob_phone != null) {
+                Log.d(TAG, "slotId:" + slotId + ";" + ((int[]) ob_phone)[0]);
+                return ((int[]) ob_phone)[0];
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return -1;
+
     }
 
 }
