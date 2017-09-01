@@ -38,15 +38,7 @@ public class SimUtils {
         if (PermissionUtil.hasSelfPermission(context, Manifest.permission.READ_PHONE_STATE) ||
                 PermissionUtil.hasSelfPermission(context, "android.permission.READ_PRIVILEGED_PHONE_STATE")) {
             Log.d(TAG, "READ_PHONE_STATE permission has BEEN granted to getSimImei().");
-            if (getSimStateBySlotIdx(context, slotIdx)) {
-                //sim1
-                if (slotIdx == 0) {
-                    return (String) getSimByMethod(context, SIM_IMEI, 0);
-                } else if (slotIdx == 1) {
-                    return (String) getSimByMethod(context, SIM_IMEI, 1);
-                }
-            }
-            return null;
+            return (String) getSimByMethod(context, SIM_IMEI, slotIdx);;
         } else {
             Log.d(TAG, "READ_PHONE_STATE permission has NOT been granted to getSimImei().");
             return null;
