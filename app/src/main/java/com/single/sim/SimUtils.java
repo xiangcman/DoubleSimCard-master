@@ -2,6 +2,10 @@ package com.single.sim;
 
 import android.Manifest;
 import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+import android.os.Build;
+import android.support.annotation.RequiresApi;
 import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
 import android.util.Log;
@@ -38,19 +42,28 @@ public class SimUtils {
         if (PermissionUtil.hasSelfPermission(context, Manifest.permission.READ_PHONE_STATE) ||
                 PermissionUtil.hasSelfPermission(context, "android.permission.READ_PRIVILEGED_PHONE_STATE")) {
             Log.d(TAG, "READ_PHONE_STATE permission has BEEN granted to getSimImei().");
-            return (String) getSimByMethod(context, SIM_IMEI, slotIdx);;
+            return (String) getSimByMethod(context, SIM_IMEI, slotIdx);
         } else {
             Log.d(TAG, "READ_PHONE_STATE permission has NOT been granted to getSimImei().");
             return null;
         }
     }
 
-    public static String getSimNetworkName(Context context, int slotIdx) {
-        if (getSimStateBySlotIdx(context, slotIdx)) {
-            return getNetworkName((int)
-                    getSimByMethod(context, SIM_NETWORK_TYPE, getSubidBySlotId(context, slotIdx)));
+    @RequiresApi(api = Build.VERSION_CODES.M)
+    public static int getSimNetworkType(Context context, int slotIdx) {
+        if (PermissionUtil.hasSelfPermission(context, Manifest.permission.READ_PHONE_STATE)) {
+            Log.d(TAG, "READ_PHONE_STATE permission has BEEN granted to getSimNetworkType().");
+            if (getSimStateBySlotIdx(context, slotIdx)) {
+                return (int) getSimByMethod(context, SIM_NETWORK_TYPE, getSubidBySlotId(context, slotIdx));
+            }
+        } else {
+            Log.d(TAG, "READ_PHONE_STATE permission has NOT been granted to getSimNetworkType().");
         }
-        return "UNKNOWN";
+        return TelephonyManager.NETWORK_TYPE_UNKNOWN;
+    }
+
+    public static String getSimNetworkName(Context context, int slotIdx) {
+        return getNetworkName(getSimNetworkType(context, slotIdx));
     }
 
     public static String getSimOperatorName(Context context, int slotIdx) {
@@ -98,6 +111,45 @@ public class SimUtils {
         return null;
     }
 
+    public static class CurrentNetwork {
+        public String whichSim;//那张卡
+        public String netWorkName;//几G网络
+        public String operateName;//卡生厂商
+    }
+
+    public static CurrentNetwork getCurrentNetwork(Context context) {
+        CurrentNetwork currentNetwork = new CurrentNetwork();
+        ConnectivityManager connectionManager = (ConnectivityManager) context
+                .getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo networkInfo = connectionManager.getActiveNetworkInfo();
+        TelephonyManager tm = (TelephonyManager) context
+                .getSystemService(Context.TELEPHONY_SERVICE);
+        Log.d(TAG, "state:" + tm.getSimState());
+        if (networkInfo != null) {
+            if (networkInfo.getType() == ConnectivityManager.TYPE_MOBILE) {
+                boolean status = networkInfo.isConnected();
+                int sim1NetWorkType = getSimNetworkType(context, 0);
+                int sim2NetWorkType = getSimNetworkType(context, 1);
+                if (networkInfo.getSubtype() == sim1NetWorkType) {
+                    if (getSimStateBySlotIdx(context, 0)) {
+                        currentNetwork.netWorkName = getNetworkName(sim1NetWorkType);
+                        currentNetwork.operateName = getSimOperatorName(context, 0);
+                        currentNetwork.whichSim = "卡1";
+                    }
+                } else if (networkInfo.getSubtype() == sim2NetWorkType) {
+                    if (getSimStateBySlotIdx(context, 1)) {
+                        currentNetwork.netWorkName = getNetworkName(sim2NetWorkType);
+                        currentNetwork.operateName = getSimOperatorName(context, 1);
+                        currentNetwork.whichSim = "卡2";
+                    }
+                }
+            }
+        } else {
+            // Logger.d(TAG, "network info is null: ");
+        }
+        return currentNetwork;
+    }
+
     public static String getNetworkName(int networkType) {
         switch (networkType) {
             case TelephonyManager.NETWORK_TYPE_GPRS:
@@ -125,6 +177,7 @@ public class SimUtils {
 
     /**
      * to
+     *
      * @param context
      * @param slotId
      * @return

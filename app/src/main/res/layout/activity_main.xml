@@ -53,7 +53,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_margin="10dp"
-            android:text="卡1imei:" />
+            android:text="卡槽1imei:" />
 
         <TextView
             android:id="@+id/sim1_imei"
@@ -72,7 +72,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_margin="10dp"
-            android:text="卡2imei:" />
+            android:text="卡槽2imei:" />
 
         <TextView
             android:id="@+id/sim2_imei"
@@ -162,6 +162,20 @@
             android:layout_width="match_parent"
             android:layout_height="0.01dp"
             android:background="#cccccc" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="10dp"
+            android:text="当前网络情况(只判断当前sim卡的网络，wifi状态下没做处理):" />
+
+        <TextView
+            android:id="@+id/current_network"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="10dp"
+            android:textColor="@color/colorPrimary"
+            android:textSize="18sp" />
 
     </LinearLayout>
 

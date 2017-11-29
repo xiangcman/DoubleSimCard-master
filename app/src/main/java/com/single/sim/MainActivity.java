@@ -100,6 +100,16 @@ public class MainActivity extends AppCompatActivity {
         } else {
             ((TextView) findViewById(R.id.sim2_networkType)).setText("未检测到卡2");
         }
+
+        SimUtils.CurrentNetwork currentNetwork = SimUtils.getCurrentNetwork(this);
+        TextView tv = (TextView) findViewById(R.id.current_network);
+        if (TextUtils.isEmpty(currentNetwork.whichSim)) {
+            tv.setText("当前网络不是sim卡数据流量");
+        } else {
+            tv.setText("当前哪张卡在使用网络:" + currentNetwork.whichSim + "\n" +
+                    "当前网络状态:" + currentNetwork.netWorkName + "\n" +
+                    "当前卡的生产厂商:" + currentNetwork.operateName);
+        }
     }
 
     public void onEventMainThread(SimStateChange event) {
