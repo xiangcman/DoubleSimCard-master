@@ -1,4 +1,4 @@
-双卡信息的获取
+### 双卡信息的获取(以及当前网络的获取)
 
 <div>
     <image src="https://github.com/1002326270xc/DoubleSimCard-master/blob/master/photos/双卡信息.png" width="250"/>
